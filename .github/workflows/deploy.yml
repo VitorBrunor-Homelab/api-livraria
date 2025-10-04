@@ -23,11 +23,13 @@ jobs:
 
     # Passo 2: Restaura as dependências do projeto (pacotes NuGet)
     - name: Restaurar dependências .NET
-      run: dotnet restore "./ApiLivraria/ApiLivraria.csproj"
+      # CORREÇÃO AQUI: Usando o nome correto da pasta com espaço e aspas
+      run: dotnet restore "./API Livraria/ApiLivraria.csproj"
 
     # Passo 3: Compila e "publica" a API, criando uma pasta com os arquivos prontos para deploy
     - name: Publicar aplicação .NET
-      run: dotnet publish "./ApiLivraria/ApiLivraria.csproj" --configuration Release --output ./publish
+      # CORREÇÃO AQUI: Usando o nome correto da pasta com espaço e aspas
+      run: dotnet publish "./API Livraria/ApiLivraria.csproj" --configuration Release --output ./publish
 
     # Passo 4: Executa os comandos de deploy no servidor
     - name: Fazer Deploy no Servidor

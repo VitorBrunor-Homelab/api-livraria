@@ -18,5 +18,20 @@ namespace API_Livraria.Controllers
         {
             return await _context.LivrosComAutores.ToListAsync();
         }
+
+        [HttpPost]
+        public async Task<ActionResult<Livro>> PostLivro(Livro livro)
+        {
+            var autorExiste = await _context.Autores.AnyAsync(a => a.ID == livro.AutorID);
+            if (!autorExiste)
+            {
+                return BadRequest("AutorID especificado não existe");
+            }
+
+            _context.Livros.Add(livro);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(null, new { id = livro.ID }, livro);
+        }
     }
 }

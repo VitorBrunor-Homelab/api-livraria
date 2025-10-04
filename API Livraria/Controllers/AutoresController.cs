@@ -34,5 +34,57 @@ namespace API_Livraria.Controllers
             }
             return autor;
         }
+
+        [HttpPost]
+        public async Task<ActionResult<Autor>> PostAutor(Autor autor)
+        {
+            _context.Autores.Add(autor);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetAutor), new { id = autor.ID }, autor);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutAutor(int id, Autor autor)
+        {
+            if (id != autor.ID) 
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(autor).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.Autores.Any(e => e.ID == id)) 
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }   
+            }
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAutor(int id)
+        {
+            var autor = await _context.Autores.FindAsync(id);
+            if (autor == null)
+            {
+                return NotFound();
+            }
+
+            _context.Autores.Remove(autor);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }

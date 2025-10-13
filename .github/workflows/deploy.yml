@@ -1,37 +1,26 @@
-﻿# Nome do workflow que aparecerá na aba "Actions" do GitHub
 name: Deploy API Livraria para Homelab
 
-# Gatilho: Este workflow será executado a cada push na branch 'master'
 on:
   push:
     branches: [ "master" ]
 
-# Define os trabalhos a serem executados
 jobs:
   build-and-deploy:
-    # Nome do job
     name: Compilar e Fazer Deploy
     
-    # Instrução crucial: diz para usar o seu runner no homelab
+    # Usa o Runner que eu hospedei no Homelab
     runs-on: self-hosted
 
-    # Passos que o runner irá executar em sequência
     steps:
-    # Passo 1: Baixa a versão mais recente do seu código do GitHub para o runner
     - name: Checkout do código
       uses: actions/checkout@v4
 
-    # Passo 2: Restaura as dependências do projeto (pacotes NuGet)
     - name: Restaurar dependências .NET
-      # CORREÇÃO AQUI: Usando o nome correto da pasta com espaço e aspas
       run: dotnet restore "./API Livraria/API Livraria.csproj"
 
-    # Passo 3: Compila e "publica" a API, criando uma pasta com os arquivos prontos para deploy
     - name: Publicar aplicação .NET
-      # CORREÇÃO AQUI: Usando o nome correto da pasta com espaço e aspas
       run: dotnet publish "./API Livraria/API Livraria.csproj" --configuration Release --output ./publish
 
-    # Passo 4: Executa os comandos de deploy no servidor
     - name: Fazer Deploy no Servidor
       run: |
         echo "--> Parando o serviço da API Livraria..."

@@ -1,4 +1,4 @@
-name: Deploy API Livraria para Homelab
+name: Deploy API Livraria para o Homelab utilizando GitOPs
 
 on:
   push:

@@ -1,5 +1,6 @@
 {
     "conventionalCommits.scopes": [
-        "Dockerfile"
+        "Dockerfile",
+        "K8s"
     ]
 }

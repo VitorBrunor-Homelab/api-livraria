@@ -1,53 +1,27 @@
-name: Deploy API Livraria para o Homelab utilizando GitOPs
+name: Build e Push da API Livraria
 
 on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
-      - 'feature/*'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
-    name: Build com Docker e Deploy com K8s
+  build-and-push:
     runs-on: self-hosted
-
-    env:
-      IMAGE_NAME: livraria/api-livraria
-      TAG: latest
-
     steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
-      
-      - name: Login no Harbor
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ secrets.HARBOR_URL  }}
-          username: ${{ secrets.HARBOR_USER }}
-          password: ${{ secrets.HARBOR_PASSWORD }}
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Build e Push da imagem Docker
-        uses: docker/build-push-action@v5
-        with:
-          context: 
-          file: ./Dockerfile
-          push: true
-          tags: ${{ secrets.HARBOR_URL }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
+    - name: Login no Harbor
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ secrets.HARBOR_URL }}
+        username: ${{ secrets.HARBOR_USER }}
+        password: ${{ secrets.HARBOR_PASSWORD }}
 
-      - name: Deploy no cluster K3s
-        run: |
-          echo "--> Aplicando manifestos"
-          kubectl apply -f k8s/
-
-          echo "--> Forçando atualização dos Pods"
-          kubectl rollout restart deployment/api-livraria -n default
-
-          echo "--> Aguardando estabilidade"
-          kubectl rollout status deployment/api-livraria -n default
+    - name: Build e Push
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ secrets.HARBOR_URL }}/api-livraria/api-livraria:latest

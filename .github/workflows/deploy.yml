@@ -2,37 +2,52 @@ name: Deploy API Livraria para o Homelab utilizando GitOPs
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+      - 'feature/*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
-    name: Compilar e Fazer Deploy
-    
-    # Usa o Runner que eu hospedei no Homelab
+    name: Build com Docker e Deploy com K8s
     runs-on: self-hosted
 
+    env:
+      IMAGE_NAME: livraria/api-livraria
+      TAG: latest
+
     steps:
-    - name: Checkout do código
-      uses: actions/checkout@v4
+      - name: Checkout do código
+        uses: actions/checkout@v4
+      
+      - name: Login no Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.HARBOR_URL  }}
+          username: ${{ secrets.HARBOR_USER }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
 
-    - name: Restaurar dependências .NET
-      run: dotnet restore "./API Livraria/API Livraria.csproj"
+      - name: Build e Push da imagem Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: 
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.HARBOR_URL }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
 
-    - name: Publicar aplicação .NET
-      run: dotnet publish "./API Livraria/API Livraria.csproj" --configuration Release --output ./publish
+      - name: Deploy no cluster K3s
+        run: |
+          echo "--> Aplicando manifestos"
+          kubectl apply -f k8s/
 
-    - name: Fazer Deploy no Servidor
-      run: |
-        echo "--> Parando o serviço da API Livraria..."
-        sudo systemctl stop apilivraria.service
-        
-        echo "--> Limpando o diretório de deploy antigo..."
-        sudo rm -rf /var/www/apilivraria/*
-        
-        echo "--> Copiando os novos arquivos da API..."
-        sudo cp -a ./publish/. /var/www/apilivraria/
-        
-        echo "--> Iniciando o serviço da API Livraria..."
-        sudo systemctl start apilivraria.service
-        
-        echo "--> Deploy da API Livraria concluído com sucesso!"
+          echo "--> Forçando atualização dos Pods"
+          kubectl rollout restart deployment/api-livraria -n default
+
+          echo "--> Aguardando estabilidade"
+          kubectl rollout status deployment/api-livraria -n default
